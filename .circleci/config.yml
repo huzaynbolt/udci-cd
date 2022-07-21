@@ -218,9 +218,8 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            apk update && apk add --no-cache curl zip &&  \
-            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.43.zip -o awscliv2.zip && \
-            unzip awscliv2.zip && ./aws/install
+            apk add py3-pip python-dev
+            pip install awscli
             cd frontend
             npm install
             npm run build
@@ -229,9 +228,6 @@ jobs:
       - destroy-environment
       - revert-migrations
    
-     
-  
-
 
 workflows:
   default:
