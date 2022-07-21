@@ -19,6 +19,7 @@ commands:
           name: Revert migrations
           command: |
             curl https://kvdb.io/7Hp5n9tYm1FLg6QE2fFM1z/migration_${CIRCLE_WORKFLOW_ID:0:7}
+            echo https://kvdb.io/7Hp5n9tYm1FLg6QE2fFM1z/migration_${CIRCLE_WORKFLOW_ID:0:7}
             SUCCESS = 1
             if(( $SUCCESS==1 )); 
             then
