@@ -136,7 +136,6 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            yum install -y tar gzip
             apk add --update ansible
             apk update && apk add --no-cache curl zip &&  \
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.43.zip -o awscliv2.zip && \
