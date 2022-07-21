@@ -1,6 +1,33 @@
 version: 2.1
 
 
+commands:
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.  
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.  
+    steps:
+      - run:
+          name: Revert migrations
+          command: |
+            curl https://kvdb.io/7Hp5n9tYm1FLg6QE2fFM1z/migration_${CIRCLE_WORKFLOW_ID:0:7}
+            SUCCESS = 1
+            if(( $SUCCESS==1 )); 
+            then
+               cd ~/project/backend
+               npm install
+               npm run migrations:revert
+            fi
+
+
 jobs:
   build-frontend:
     docker:
@@ -164,6 +191,41 @@ jobs:
               then
                  curl https://kvdb.io/7Hp5n9tYm1FLg6QE2fFM1z/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
               fi
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+            apk add --update nodejs npm
+            apk update && apk add --no-cache curl zip &&  \
+            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.43.zip -o awscliv2.zip && \
+            unzip awscliv2.zip && ./aws/install
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$( aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}")
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - destroy_environment
+      - revert-migrations
+   
      
   
 
@@ -187,3 +249,5 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
