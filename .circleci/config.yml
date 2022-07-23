@@ -9,7 +9,7 @@ commands:
         type: string 
     steps:
       - run:
-          name: Destroy environments
+          name: Destroy environments << parameters.workflow_id >>
           when: on_fail
           command: |
             echo "Destroying environment: << parameters.workflow_id >> "
