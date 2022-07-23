@@ -18,9 +18,9 @@
 
   - name: "Executing Node with PM2"
     shell:  |
-      cd ~/app/dist
       pm2 stop default
-      pm2 start npm run start:prod
+      pm2 start npm --name "udapeople" -- run "start:prod"
+      pm2 list
     register: execute_node
 
   - name: "Add Pm2 as startup service"
