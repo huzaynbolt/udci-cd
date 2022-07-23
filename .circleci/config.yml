@@ -27,6 +27,7 @@ commands:
                npm install
                npm run migrations:revert
             fi
+            
 
 
 jobs:
@@ -229,6 +230,38 @@ jobs:
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy-environment
       - revert-migrations
+  deploy-backend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+            fingerprints: ["b2:85:b3:3d:29:aa:c4:10:45:06:6f:bd:c7:04:51:3e"] 
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+            apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+            apk add --update nodejs npm
+            apk update && apk add --no-cache curl zip &&  \
+            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.2.43.zip -o awscliv2.zip && \
+            unzip awscliv2.zip && ./aws/install
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # Zip the directory
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      # Here's where you will add some code to rollback on failure 
    
 
 workflows:
