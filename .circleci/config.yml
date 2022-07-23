@@ -25,6 +25,7 @@ commands:
     steps:
       - run:
           name: Revert migrations
+          when: on_fail
           command: |
             SUCCESS=$(curl https://kvdb.io/3TFVU9C1XLjuycgAcvT7wZ/migration_<< parameters.workflow_id >>)
             echo http://kvdb.io/3TFVU9C1XLjuycgAcvT7wZ/migration_<< parameters.workflow_id >>
